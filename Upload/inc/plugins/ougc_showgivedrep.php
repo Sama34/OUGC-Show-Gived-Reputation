@@ -103,7 +103,7 @@ function ougc_showgivedrep_variable()
 		isset($lang->ougc_showgivedrep_title) or $lang->ougc_showgivedrep_title = 'Gived Reputations';
 		$lang->comments = $lang->ougc_showgivedrep_title;
 		$show_selected['self'] = ' selected="selected"';
-		control_object($GLOBALS['db'], '
+		ougc_showgivedrep_control_object($GLOBALS['db'], '
 			function query($string, $hide_errors=0, $write_query=0)
 			{
 				static $selfrepdone = false;
@@ -136,39 +136,42 @@ function ougc_showgivedrep_variable()
 	eval('$ougc_showgivedrep = "'.$templates->get('ougc_showgivedrep').'";');
 }
 
-// Control object written by Zinga Burga / Yumi from ( http://mybbhacks.zingaburga.com/ )
-if(!function_exists('control_object'))
+// control_object by Zinga Burga from MyBBHacks ( mybbhacks.zingaburga.com ), 1.62
+function ougc_showgivedrep_control_object(&$obj, $code)
 {
-	function control_object(&$obj, $code)
+	static $cnt = 0;
+	$newname = '_objcont_'.(++$cnt);
+	$objserial = serialize($obj);
+	$classname = get_class($obj);
+	$checkstr = 'O:'.strlen($classname).':"'.$classname.'":';
+	$checkstr_len = strlen($checkstr);
+	if(substr($objserial, 0, $checkstr_len) == $checkstr)
 	{
-		static $cnt = 0;
-		$newname = '_objcont_'.(++$cnt);
-		$objserial = serialize($obj);
-		$classname = get_class($obj);
-		$checkstr = 'O:'.strlen($classname).':"'.$classname.'":';
-		$checkstr_len = strlen($checkstr);
-		if(substr($objserial, 0, $checkstr_len) == $checkstr)
+		$vars = array();
+		// grab resources/object etc, stripping scope info from keys
+		foreach((array)$obj as $k => $v)
 		{
-			$vars = array();
-			// grab resources/object etc, stripping scope info from keys
-			foreach((array)$obj as $k => $v)
+			if($p = strrpos($k, "\0"))
 			{
-				if($p = strrpos($k, "\0"))
-					$k = substr($k, $p+1);
-				$vars[$k] = $v;
+				$k = substr($k, $p+1);
 			}
-			if(!empty($vars))
-				$code .= '
-					function ___setvars(&$a) {
-						foreach($a as $k => &$v)
-							$this->$k = $v;
-					}
-				';
-			eval('class '.$newname.' extends '.$classname.' {'.$code.'}');
-			$obj = unserialize('O:'.strlen($newname).':"'.$newname.'":'.substr($objserial, $checkstr_len));
-			if(!empty($vars))
-				$obj->___setvars($vars);
+			$vars[$k] = $v;
 		}
-		// else not a valid object or PHP serialize has changed
+		if(!empty($vars))
+		{
+			$code .= '
+				function ___setvars(&$a) {
+					foreach($a as $k => &$v)
+						$this->$k = $v;
+				}
+			';
+		}
+		eval('class '.$newname.' extends '.$classname.' {'.$code.'}');
+		$obj = unserialize('O:'.strlen($newname).':"'.$newname.'":'.substr($objserial, $checkstr_len));
+		if(!empty($vars))
+		{
+			$obj->___setvars($vars);
+		}
 	}
+	// else not a valid object or PHP serialize has changed
 }
