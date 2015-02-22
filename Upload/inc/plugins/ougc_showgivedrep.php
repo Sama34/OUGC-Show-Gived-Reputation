@@ -153,7 +153,7 @@ function ougc_showgivedrep_variable()
 {
 	global $mybb;
 
-	if($mybb->input['action'])
+	if($mybb->get_input('action'))
 	{
 		return;
 	}
@@ -164,7 +164,7 @@ function ougc_showgivedrep_variable()
 	
 
 	$show_selected['self'] = '';
-	if($mybb->input['show'] == 'self')
+	if($mybb->get_input('show') == 'self')
 	{
 		isset($lang->ougc_showgivedrep_title) or $lang->ougc_showgivedrep_title = 'Gived Reputations';
 		$lang->comments = $lang->ougc_showgivedrep_title;
